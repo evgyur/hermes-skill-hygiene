@@ -58,6 +58,15 @@ class AuditTests(unittest.TestCase):
         self.assertNotEqual(first['findings'][0]['id'], second['findings'][0]['id'])
         self.assertNotEqual(first['signature'], second['signature'])
         self.assertTrue(first['findings'][0]['identity_reliable'])
+    def test_incomplete_scan_cannot_be_accepted_as_complete_source(self):
+        ref = self.skill / 'references/guide.md'
+        ref.parent.mkdir()
+        ref.write_text('# Not admitted by this test budget\n')
+        report = self.run_audit(deep=True, max_files=1)
+        finding = next(f for f in report['findings'] if f['kind'] == 'incomplete_scan')
+        self.assertFalse(finding['identity_reliable'])
+        review = a.evaluate_reviews(report, [{'id': finding['id'], 'decision': 'historical', 'reason': 'Cannot certify unread scope.'}])
+        self.assertIn(finding, review['unreviewed'])
     def test_duplicate_yaml_key(self):
         r = self.run_audit(GOOD.replace('name: sample', 'name: sample\nname: other'))
         self.assertEqual(r['findings'][0]['detail'], 'DuplicateKey')

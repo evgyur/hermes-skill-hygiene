@@ -19,6 +19,9 @@ MAX_BYTES = 2 * 1024 * 1024
 class DuplicateKey(ValueError):
     pass
 
+class ScanIncomplete(ValueError):
+    pass
+
 class StrictLoader(yaml.SafeLoader):
     pass
 
@@ -126,7 +129,7 @@ def audit(entries, deep=False, max_files=50000):
             return
         seen_docs.add(real)
         if len(seen_docs) > max_files:
-            raise ValueError('document budget exhausted; scan is incomplete')
+            raise ScanIncomplete('document budget exhausted; scan is incomplete')
         raw = None
         try:
             raw = read(real); text = raw.decode('utf-8')
@@ -175,7 +178,10 @@ def audit(entries, deep=False, max_files=50000):
                             if filename.lower().endswith('.md'):
                                 document(Path(directory) / filename)
         except (OSError, UnicodeError, ValueError, yaml.YAMLError, TypeError) as error:
-            finding('invalid_root', path, detail=type(error).__name__, **source_identity(path, raw))
+            if isinstance(error, ScanIncomplete):
+                finding('incomplete_scan', path, detail=type(error).__name__, identity_reliable=False)
+            else:
+                finding('invalid_root', path, detail=type(error).__name__, **source_identity(path, raw))
     by_path = collections.defaultdict(list)
     for f in findings:
         by_path[f['path']].append(f['kind'])
