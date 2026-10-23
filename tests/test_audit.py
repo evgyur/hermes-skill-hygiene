@@ -31,6 +31,33 @@ class AuditTests(unittest.TestCase):
         r = self.run_audit()
         self.assertEqual(r['findings'], [])
         self.assertEqual(r['readable_roots'], 1)
+    def test_invalid_root_rewrite_invalidates_exception_and_signature(self):
+        first = self.run_audit('# Malformed source A\n')
+        self.assertEqual(first['findings'][0]['detail'], 'ValueError')
+        decision = {'id': first['findings'][0]['id'], 'decision': 'historical', 'reason': 'Synthetic retained invalid source A.'}
+        self.assertFalse(a.evaluate_reviews(first, [decision])['unreviewed'])
+        second = self.run_audit('# Malformed source B\n')
+        self.assertEqual(second['findings'][0]['detail'], 'ValueError')
+        self.assertNotEqual(first['signature'], second['signature'])
+        review = a.evaluate_reviews(second, [decision])
+        self.assertEqual(len(review['unreviewed']), 1)
+        self.assertEqual(review['stale_decision_ids'], [decision['id']])
+    def test_unidentifiable_missing_root_cannot_be_silenced(self):
+        self.path.unlink()
+        report = a.audit([{'path': str(self.path)}])
+        finding = report['findings'][0]
+        self.assertFalse(finding['identity_reliable'])
+        decision = {'id': finding['id'], 'decision': 'protected_owner', 'reason': 'Synthetic missing source; identity cannot be established.'}
+        self.assertEqual(len(a.evaluate_reviews(report, [decision])['unreviewed']), 1)
+    def test_unreadable_identity_change_affects_signature(self):
+        from unittest.mock import patch
+        with patch.object(Path, 'read_bytes', side_effect=PermissionError):
+            first = self.run_audit()
+            self.path.write_text(GOOD + '# changed length\n')
+            second = self.run_audit()
+        self.assertNotEqual(first['findings'][0]['id'], second['findings'][0]['id'])
+        self.assertNotEqual(first['signature'], second['signature'])
+        self.assertTrue(first['findings'][0]['identity_reliable'])
     def test_duplicate_yaml_key(self):
         r = self.run_audit(GOOD.replace('name: sample', 'name: sample\nname: other'))
         self.assertEqual(r['findings'][0]['detail'], 'DuplicateKey')

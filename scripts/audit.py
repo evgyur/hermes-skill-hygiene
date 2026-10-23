@@ -96,6 +96,18 @@ def source_owner(path):
             return 'repository-bound'
     return 'local-or-external; verify receipt before mutation'
 
+def source_identity(path, raw=None):
+    """Bind even failed parses/reads; an unidentifiable source cannot be silenced."""
+    if raw is not None:
+        return {'source_sha256': digest(raw), 'identity_reliable': True}
+    try:
+        st = path.stat()
+    except OSError:
+        return {'stat_signature': None, 'identity_reliable': False}
+    return {'stat_signature': [st.st_dev, st.st_ino, st.st_uid, st.st_mode,
+                               st.st_size, st.st_mtime_ns, st.st_ctime_ns],
+            'identity_reliable': True}
+
 def audit(entries, deep=False, max_files=50000):
     findings = []; advisories = []; records = []; file_records = []; seen = set(); seen_docs = set(); finding_ids = set()
     def finding(kind, path, **extra):
@@ -115,6 +127,7 @@ def audit(entries, deep=False, max_files=50000):
         seen_docs.add(real)
         if len(seen_docs) > max_files:
             raise ValueError('document budget exhausted; scan is incomplete')
+        raw = None
         try:
             raw = read(real); text = raw.decode('utf-8')
             file_records.append({'path': str(real), 'sha256': digest(raw), 'bytes': len(raw)})
@@ -124,12 +137,7 @@ def audit(entries, deep=False, max_files=50000):
                 elif not (real.parent / target).exists():
                     finding('broken_relative_link', real, link=link, source_sha256=digest(raw))
         except (OSError, UnicodeError, ValueError) as error:
-            try:
-                st = real.stat()
-                signature = [st.st_uid, st.st_mode, st.st_size, st.st_mtime_ns]
-            except OSError:
-                signature = None
-            finding('unreadable_document', real, detail=type(error).__name__, stat_signature=signature)
+            finding('unreadable_document', real, detail=type(error).__name__, **source_identity(real, raw))
     grouped = {}
     for entry in entries:
         key = str(Path(entry['path']).absolute().resolve())
@@ -141,6 +149,7 @@ def audit(entries, deep=False, max_files=50000):
         if path in seen:
             continue
         seen.add(path)
+        raw = None
         try:
             raw = read(path); text = raw.decode('utf-8'); fm = frontmatter(text)
             name = fm.get('name'); description = fm.get('description')
@@ -166,14 +175,14 @@ def audit(entries, deep=False, max_files=50000):
                             if filename.lower().endswith('.md'):
                                 document(Path(directory) / filename)
         except (OSError, UnicodeError, ValueError, yaml.YAMLError, TypeError) as error:
-            finding('invalid_root', path, detail=type(error).__name__)
+            finding('invalid_root', path, detail=type(error).__name__, **source_identity(path, raw))
     by_path = collections.defaultdict(list)
     for f in findings:
         by_path[f['path']].append(f['kind'])
     for record in records:
         if record['path'] in by_path:
             record['disposition'] = 'repair-or-owner-reviewed-exception'
-    signature = digest(json.dumps({'documents': sorted(file_records, key=lambda f: f['path']), 'entries': sorted((str(e['path']), e.get('resolution_status', ''), sorted(e.get('effective_profiles', []))) for e in entries)}, sort_keys=True).encode())
+    signature = digest(json.dumps({'documents': sorted(file_records, key=lambda f: f['path']), 'error_and_finding_evidence': sorted(findings, key=lambda f: f['id']), 'entries': sorted((str(e['path']), e.get('resolution_status', ''), sorted(e.get('effective_profiles', []))) for e in entries)}, sort_keys=True).encode())
     return {'schema_version': 1, 'discovery': 'caller-supplied catalog; verify it came from the managed runtime', 'deep': deep, 'unique_roots': len(seen), 'readable_roots': len(records), 'documents_read': len(file_records), 'signature': signature, 'records': records, 'documents': file_records, 'findings': findings, 'advisories': advisories, 'counts': dict(collections.Counter(f['kind'] for f in findings)), 'boundary': 'read-only structural evidence; no semantic disuse, deletion, readiness, latency, model-quality or live-delivery claim'}
 
 def verify_partition(original, parts):
@@ -204,7 +213,7 @@ def evaluate_reviews(report, decisions):
     reviewed = []; unreviewed = []
     current_ids = {finding['id'] for finding in report['findings']}
     for finding in report['findings']:
-        if finding['id'] in indexed:
+        if finding['id'] in indexed and finding.get('identity_reliable', True):
             reviewed.append({'finding': finding, 'review': indexed[finding['id']]})
         else:
             unreviewed.append(finding)

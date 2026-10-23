@@ -45,7 +45,7 @@ The collector is version-bound to installed Hermes catalog/command interfaces. A
 python scripts/audit.py --root "$SKILL_ROOT" --deep --out "$PRIVATE_DIR/audit.json"
 ```
 
-Review exceptions are a private JSON list of objects with `id`, `decision` and `reason`; allowed decisions are historical, template, source_bound, protected_owner and runtime_accepted_name. Copy the exact finding ID from a real report and explain its individual boundary. Do not generate blanket exceptions. Run with `--reviewed "$PRIVATE_DIR/reviews.json"`. A changed source invalidates its prior finding ID. `--strict` then fails on unreviewed findings, not on explicitly retained ones; original findings and reviewed counts remain visible.
+Review exceptions are a private JSON list of objects with `id`, `decision` and `reason`; allowed decisions are historical, template, source_bound, protected_owner and runtime_accepted_name. Copy the exact finding ID from a real report and explain its individual boundary. Do not generate blanket exceptions. Run with `--reviewed "$PRIVATE_DIR/reviews.json"`. A changed source invalidates its prior finding ID, including malformed frontmatter and failed reads. Error evidence participates in the overall signature. When neither bytes nor reliable file metadata can identify a source, a prior review cannot silence it. `--strict` then fails on unreviewed findings, not on explicitly retained ones; original findings and reviewed counts remain visible.
 
 ## Weekly use
 
