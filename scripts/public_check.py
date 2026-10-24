@@ -9,7 +9,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = ['SKILL.md', 'README.md', 'AGENT_HANDOFF.md', 'LICENSE', 'requirements.txt',
             'scripts/audit.py', 'scripts/collect.py', 'references/decision-rules.md',
-            'references/weekly-contract.md', 'tests/test_audit.py']
+            'references/weekly-contract.md', 'tests/test_audit.py', 'scripts/run_evals.py',
+            'evals/evals.json', 'references/behavioral-evals.md', 'references/eval-results.md',
+            'tests/test_evals.py']
 PATTERNS = {
     'private-key': re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----'),
     'provider-key': re.compile(r'sk-[A-Za-z0-9_-]{24,}'),

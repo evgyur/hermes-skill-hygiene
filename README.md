@@ -51,6 +51,19 @@ Review exceptions are a private JSON list of objects with `id`, `decision` and `
 
 Authorize and provision one job in the existing scheduler using [the weekly contract](references/weekly-contract.md). Resolve your own selectors, timezone, private origin and safety scope. On an unchanged signature stay silent. On drift inspect and perform bounded authorized maintenance, verify it, then advance successful state. Do not auto-push this repository, delete rarely used skills, disable features or touch production services.
 
+## Real agent evaluations
+
+[Three frozen behavior cases](evals/evals.json) can be run through your existing managed Hermes runtime, with and without Skill Hygiene:
+
+```sh
+PYTHONPATH="$RUNTIME_ROOT" "$MANAGED_PYTHON" scripts/run_evals.py \
+  --runtime-root "$RUNTIME_ROOT" --out "$PRIVATE_EVIDENCE_DIR"
+```
+
+These are actual native-agent/model conversations, not simulated answers. Only closed synthetic-fixture tools are admitted; there are no production filesystem or messaging tools. The runner freezes input/model identity, checks native completion and actual state, and treats a forbidden attempt as failure even if the tool guard blocks it. It preserves native deferred tool discovery rather than replacing that runtime surface. Read [the evaluation contract](references/behavioral-evals.md) before use. Model calls use the configured provider and its ordinary quota; offline unit tests do not.
+
+The [recorded six-run result](references/eval-results.md) is 3/3 with and 3/3 without the skill, with identical final-run action counts. No quality or efficiency advantage was established on this small sample. The 45 offline unit tests are a separate measure.
+
 ## Inspiration and evidence limits
 
 Inspired by [rlaope's post about periodic Hermes skill cleanup](https://x.com/rlaope/status/2113535565874540645). This repository adds ownership, preservation and verification gates; it does not claim the post supplied a performance benchmark or this implementation.

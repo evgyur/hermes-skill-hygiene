@@ -1,7 +1,7 @@
 ---
 name: skill-hygiene
 description: "Use when auditing or cleaning an agent skill library."
-version: 1.0.1
+version: 1.1.0
 license: MIT
 ---
 
@@ -39,6 +39,15 @@ Use the existing scheduler, not a second daemon. Follow [weekly contract](refere
 ## Output Contract
 
 Report inventoried/readable/content-reviewed/modified sets separately. State changed roots/aliases/references, before/after bytes, preserved material, tests, source/runtime receipts, retained findings and exact blockers. Label structural/plumbing tests honestly. Do not claim all skills semantically audited, latency reduced or model quality improved from a file count or byte reduction.
+
+## Behavioral evaluation
+
+For changes to this workflow, use [the isolated evaluation contract](references/behavioral-evals.md). The three synthetic tasks exercise actual native-agent conversations with and without this skill; frozen inputs and deterministic filesystem checks, not an agent's success claim, decide the result. These runs do not certify production readiness, automatic skill selection or general model-quality gains.
+
+## Gotchas
+
+* Already accepted, unchanged source-bound findings are retained state, not new repair tasks. Do not restart a broad investigation merely because their count is nonzero.
+* A guard rejecting a forbidden write protects the fixture but does not make the agent's attempted write correct. Record both preservation and the failed decision.
 
 ## Quick Test Checklist
 
