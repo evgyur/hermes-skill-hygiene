@@ -21,3 +21,11 @@ A malformed frontmatter field, broken alias or wrong relative path is a defect w
 ## Hold
 
 Hold a source-owned change, unreadable document, native-manager guard failure, raw historical snapshot or protected effect with exact evidence. A reviewed exception needs an individual finding ID and a reason; it does not erase the finding or certify unread content. Re-review on source/stat change. Do not silently change permissions, weaken validators, retire features or migrate owners.
+
+## Reconcile independent changes
+
+Keep three identities separate: original inventoried source, accepted candidate, and currently observed bytes. Preserve the original acceptance hash when another writer changes the file; never rebind it to the successor to make an old receipt pass.
+
+Read the exact independent diff and the current governing content before recording a successor as reviewed. Check root and reference files individually: rereading a root does not certify a concurrently changed reference. Verify the selected current bytes through the native loader in each admitted profile, including the expected disabled rejection. Record the new hash, disposition and receipt separately from the historical candidate. Leave unread or still-moving successors explicitly pending rather than describing the whole library as verified.
+
+Treat independently changed command visibility as an observed baseline delta, not permission to enable, disable or use those commands. Bind the exact added/removed keys and source receipt before evaluating the task's own changes; preserve unrelated policy and reject additional unexplained deltas. Count independently reread roots once, and count changed supporting documents separately from newly reviewed roots.
